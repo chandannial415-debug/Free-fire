@@ -1,1 +1,24 @@
-vhvhg
+{
+  "expo": {
+    "name": "Free Esports Tournaments",
+    "slug": "free-esports-tournaments",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#0f0f1a"
+    },
+    "android": {
+      "package": "com.yourname.esports",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#7c3aed"
+      },
+      "permissions": []
+    },
+    "ios": {
+      "bundleIdentifier": "com.yourname.esports"
+    }
+  }
+}
