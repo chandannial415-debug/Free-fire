@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
+    body { background: #0f0f1a; color: #fff; padding: 16px; max-width: 600px; margin: 0 auto; }
+    h1 { font-size: 20px; margin-bottom: 16px; }
+    h2 { font-size: 15px; margin: 20px 0 10px; color: #a78bfa; }
+    input, button {
+      width: 100%; padding: 10px; margin-bottom: 8px;
+      border-radius: 8px; border: 1px solid #2a2a3e;
+      background: #1a1a2e; color: #fff; font-size: 14px;
+    }
+    button { background: #7c3aed; font-weight: 600; cursor: pointer; border: none; }
+    button:active { background: #6d28d9; }
+    .card { background: #1a1a2e; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; }
+    .row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #2a2a3e; }
+    .row:last-child { border-bottom: none; }
+    .small-btn {
+      width: auto; padding: 4px 10px; font-size: 12px;
+      background: #dc2626; margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🛠️ Admin Panel</h1>
+
+  <h2>➕ Add Tournament</h2>
+  <input id="tName" placeholder="Tournament name" />
+  <input id="tGame" placeholder="Game (Free Fire MAX / BGMI)" />
+  <input id="tDate" type="date" />
+  <input id="tTime" placeholder="Time (e.g. 8:00 PM)" />
+  <input id="tMax" type="number" placeholder="Max players" />
+  <input id="tPrize" placeholder="Prize (coins/gift card)" />
+  <button onclick="addTournament()">Add</button>
+
+  <h2>📋 Tournaments</h2>
+  <div id="tourList"></div>
+
+  <h2>👥 Registered Players</h2>
+  <div id="playerList"></div>
+
+  <button style="background:#333;margin-top:20px;" onclick="exportData()">📤 Export JSON</button>
+
+<script>
+const DB = {
+  get: (k, d) => JSON.parse(localStorage.getItem(k) || JSON.stringify(d)),
+  set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
+};
+
+function addTournament() {
+  const name = document.getElementById('tName').value.trim();
+  const game = document.getElementById('tGame').value.trim();
+  const date = document.getElementById('tDate').value;
+  const time = document.getElementById('tTime').value.trim();
+  const max = +document.getElementById('tMax').value;
+  const prize = document.getElementById('tPrize').value.trim();
+  if (!name || !game || !date || !time || !max || !prize) {
+    alert('Sab fields bharo.'); return;
+  }
+  const tours = DB.get('es_tournaments', []);
+  tours.push({ id: 't' + Date.now(), name, game, date, time, maxPlayers: max, prize, status: 'open' });
+  DB.set('es_tournaments', tours);
+  alert('✅ Tournament added.');
+  render();
+}
+
+function deleteTournament(id) {
+  if (!confirm('Delete this tournament?')) return;
+  DB.set('es_tournaments', DB.get('es_tournaments', []).filter(t => t.id !== id));
+  render();
+}
+
+function render() {
+  const tours = DB.get('es_tournaments', []);
+  const regs = DB.get('es_registrations', []);
+  const players = DB.get('es_players', []);
+
+  document.getElementById('tourList').innerHTML = tours.map(t => {
+    const count = regs.filter(r => r.tournamentId === t.id).length;
+    return `<div class="card">
+      <div class="row"><strong>${t.name}</strong>
+        <button class="small-btn" onclick="deleteTournament('${t.id}')">X</button></div>
+      <div class="row"><span>${t.game}</span><span>${count}/${t.maxPlayers}</span></div>
+      <div class="row"><span>${t.date} ${t.time}</span><span>${t.prize}</span></div>
+    </div>`;
+  }).join('') || '<p style="color:#666;">No tournaments.</p>';
+
+  document.getElementById('playerList').innerHTML = players.map(p => `
+    <div class="card">
+      <div class="row"><strong>${p.name}</strong><span>${p.uid}</span></div>
+      <div class="row"><span>📱 ${p.phone}</span><span>Kills: ${p.kills}</span></div>
+    </div>
+  `).join('') || '<p style="color:#666;">No players yet.</p>';
+}
+
+function exportData() {
+  const data = {
+    tournaments: DB.get('es_tournaments', []),
+    players: DB.get('es_players', []),
+    registrations: DB.get('es_registrations', []),
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'tournaments-data.json';
+  a.click();
+}
+
+render();
+</script>
+</body>
+</html>
