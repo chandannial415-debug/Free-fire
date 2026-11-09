@@ -1,47 +1,226 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius } from '../theme';
 
 export default function TournamentCard({ tournament: t, joined, onJoin }) {
-  const full = joined >= t.maxPlayers;
+  const isFull = joined >= t.maxPlayers;
 
   return (
     <View style={styles.card}>
-      <View style={styles.header}>
-        <Text style={styles.title} numberOfLines={2}>{t.name}</Text>
-        <View style={[styles.badge, full ? styles.badgeFull : styles.badgeOpen]}>
-          <Text style={[styles.badgeText, { color: full ? colors.danger : colors.success }]}>
-            {full ? 'FULL' : 'OPEN'}
-          </Text>
+      
+      {/* Banner Image (Placeholder) */}
+      <View style={styles.imageContainer}>
+        <View style={styles.placeholderImage}>
+          <Text style={styles.placeholderText}>{t.game || 'FREE FIRE'}</Text>
         </View>
+        {/* Agar aapke paas real image URL ho to yahan <Image source={{uri: t.image}} /> use karein */}
       </View>
-      <Text style={styles.meta}>🎮 {t.game}</Text>
-      <Text style={styles.meta}>🕹️ Mode: {t.mode || 'Classic'}</Text>
-      <Text style={styles.meta}>📅 {t.date} • {t.time}</Text>
-      <Text style={styles.meta}>👥 {joined}/{t.maxPlayers} joined</Text>
-      <Text style={styles.meta}>🏆 {t.prize}</Text>
-      <TouchableOpacity
-        style={[styles.btn, full && styles.btnDisabled]}
-        onPress={onJoin}
-        disabled={full}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.btnText}>{full ? 'Full' : 'Free Join'}</Text>
-      </TouchableOpacity>
+
+      <View style={styles.content}>
+        
+        {/* Top Row: Mode & Time */}
+        <View style={styles.headerRow}>
+          <View style={styles.modeBadge}>
+            <Text style={styles.modeText}>{t.mode || 'BR SQUAD'}</Text>
+          </View>
+          <View style={styles.timeBadge}>
+            <Ionicons name="time-outline" size={14} color={colors.textMuted} />
+            <Text style={styles.timeText}>{t.date} | {t.time}</Text>
+          </View>
+        </View>
+
+        {/* Title & Subtitle */}
+        <Text style={styles.title} numberOfLines={2}>{t.name}</Text>
+        <Text style={styles.subtitle}>{t.game} BATTLE ROYALE TOURNAMENT</Text>
+
+        {/* Stats Row (Prize, Kill, Entry) */}
+        <View style={styles.statsRow}>
+          <View style={styles.statBox}>
+            <Text style={styles.statLabel}>PRIZE</Text>
+            <Text style={styles.statValueGreen}>{t.prize}</Text>
+          </View>
+          <View style={[styles.statBox, styles.statBorder]}>
+            <Text style={styles.statLabel}>KILL</Text>
+            <Text style={styles.statValueWhite}>-</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statLabel}>ENTRY</Text>
+            <Text style={styles.statValuePurple}>{t.entry || '₹10'}</Text>
+          </View>
+        </View>
+
+        {/* Bottom Row: Joined Count & Join Button */}
+        <View style={styles.footerRow}>
+          <Text style={styles.joinedText}>{joined}/{t.maxPlayers}</Text>
+          
+          <View style={styles.btnContainer}>
+            <TouchableOpacity style={styles.rulesBtn} activeOpacity={0.7}>
+              <Text style={styles.rulesText}>VIEW RULES</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.joinBtn, isFull && styles.joinBtnDisabled]} 
+              onPress={onJoin}
+              disabled={isFull}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.joinText}>{isFull ? 'FULL' : 'JOIN'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg, marginBottom: spacing.md, borderWidth: 1, borderColor: colors.border },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.sm },
-  title: { fontSize: 16, fontWeight: '700', color: colors.text, flex: 1, marginRight: spacing.sm },
-  badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.sm },
-  badgeOpen: { backgroundColor: colors.successBg },
-  badgeFull: { backgroundColor: colors.dangerBg },
-  badgeText: { fontSize: 11, fontWeight: '700' },
-  meta: { fontSize: 12, color: colors.textMuted, marginBottom: 4 },
-  btn: { backgroundColor: colors.primary, padding: spacing.md, borderRadius: radius.md, marginTop: spacing.md, alignItems: 'center', minHeight: 44, justifyContent: 'center' },
-  btnDisabled: { opacity: 0.5 },
-  btnText: { color: '#fff', fontWeight: '600', fontSize: 14 },
+  card: {
+    backgroundColor: colors.card,
+    borderRadius: radius.lg,
+    marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  imageContainer: {
+    width: '100%',
+    height: 140,
+    backgroundColor: '#2a2a2a',
+  },
+  placeholderImage: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    color: 'rgba(255,255,255,0.2)',
+    fontSize: 24,
+    fontWeight: '900',
+    fontStyle: 'italic',
+  },
+  content: {
+    padding: spacing.lg,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  modeBadge: {
+    backgroundColor: colors.cardLight,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modeText: {
+    color: colors.primary,
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  timeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  timeText: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  title: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  subtitle: {
+    color: colors.primary,
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginBottom: spacing.lg,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: spacing.md,
+    marginBottom: spacing.md,
+  },
+  statBox: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statBorder: {
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: colors.border,
+  },
+  statLabel: {
+    color: colors.textDim,
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  statValueGreen: {
+    color: colors.success,
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  statValueWhite: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  statValuePurple: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  joinedText: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  btnContainer: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  rulesBtn: {
+    backgroundColor: colors.cardLight,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 10,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  rulesText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  joinBtn: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: 10,
+    borderRadius: radius.md,
+  },
+  joinBtnDisabled: {
+    backgroundColor: colors.cardLight,
+  },
+  joinText: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
 });
