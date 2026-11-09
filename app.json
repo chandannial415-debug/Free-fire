@@ -19,6 +19,11 @@
     },
     "ios": {
       "bundleIdentifier": "com.yourname.esports"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "8967b04a-6163-44cc-81f7-f1b543638d3b"
+      }
     }
   }
 }
