@@ -1,215 +1,152 @@
-import React, { useState, useCallback } from 'react';
-import {
-  View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet,
-  Alert, RefreshControl, Modal, Linking,
-} from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { db } from '../storage';
-import { colors, spacing, radius } from '../theme';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-const ADMIN_PIN = '1234'; // ⚠️ change this before going live!
+// ⚠️ Yahan apni Email ID aur Password set karo
+const OWNER_EMAIL = 'chandannial938@gmail.com';
+const ADMIN_PIN = '1234'; 
 
 export default function AdminScreen() {
-  const [authed, setAuthed] = useState(false);
+  const [step, setStep] = useState(1); // 1 = Email Check, 2 = PIN, 3 = Admin Panel
+  const [email, setEmail] = useState('');
   const [pin, setPin] = useState('');
-  const [tours, setTours] = useState([]);
-  const [players, setPlayers] = useState([]);
-  const [regs, setRegs] = useState([]);
-  const [refreshing, setRefreshing] = useState(false);
 
-  const [name, setName] = useState('');
-  const [game, setGame] = useState('');
-  const [mode, setMode] = useState('');
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
-  const [maxPlayers, setMaxPlayers] = useState('');
-  const [prize, setPrize] = useState('');
-
-  const [killModal, setKillModal] = useState({ visible: false, player: null, value: '' });
-
-  const load = useCallback(async () => {
-    const [t, p, r] = await Promise.all([
-      db.getTournaments(),
-      db.getPlayers(),
-      db.getRegistrations(),
-    ]);
-    setTours(t);
-    setPlayers(p);
-    setRegs(r);
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (authed) load();
-    }, [authed, load])
-  );
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await load();
-    setRefreshing(false);
-  };
-
-  const tryLogin = () => {
-    if (pin === ADMIN_PIN) {
-      setAuthed(true);
-      setPin('');
+  const handleEmailCheck = () => {
+    if (email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
+      setStep(2); // Email sahi hai, ab PIN maango
     } else {
-      Alert.alert('❌ Wrong PIN');
+      Alert.alert('Access Denied', 'Ye email admin ke liye registered nahi hai.');
     }
   };
 
-  const addTournament = async () => {
-    if (!name.trim() || !game.trim() || !date.trim() || !time.trim() || !maxPlayers || !prize.trim()) {
-      Alert.alert('Sab fields bharo');
-      return;
+  const handlePinCheck = () => {
+    if (pin === ADMIN_PIN) {
+      setStep(3); // PIN sahi hai, Admin panel kholo
+    } else {
+      Alert.alert('Error', 'Galat PIN! Dobara koshish karein.');
     }
-    const list = await db.getTournaments();
-    list.push({
-      id: 't' + Date.now(),
-      name: name.trim(),
-      game: game.trim(),
-      mode: mode.trim() || 'Classic',
-      date: date.trim(),
-      time: time.trim(),
-      maxPlayers: +maxPlayers,
-      prize: prize.trim(),
-      status: 'open',
-    });
-    await db.setTournaments(list);
-    setName(''); setGame(''); setMode(''); setDate(''); setTime(''); setMaxPlayers(''); setPrize('');
-    await load();
-    Alert.alert('✅ Added');
   };
 
-  const deleteTournament = (id) => {
-    Alert.alert('Delete?', 'Ye tournament aur iski registrations hat jayengi.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          await db.setTournaments(tours.filter((t) => t.id !== id));
-          await db.setRegistrations(regs.filter((r) => r.tournamentId !== id));
-          await load();
-        },
-      },
-    ]);
-  };
-
-  const submitKills = async () => {
-    const k = parseInt(killModal.value, 10);
-    if (!k || k <= 0) {
-      Alert.alert('Invalid', 'Positive number dalo');
-      return;
-    }
-    const list = players.slice();
-    const i = list.findIndex((p) => p.id === killModal.player.id);
-    if (i === -1) return;
-    list[i].kills += k;
-    list[i].coins += k * 7;
-    list[i].matches += 1;
-    await db.setPlayers(list);
-    setKillModal({ visible: false, player: null, value: '' });
-    await load();
-  };
-
-  const shareWA = (t) => {
-    const msg = `🎮 *${t.name}*\nMode: ${t.mode || 'Classic'}\nGame: ${t.game}\nDate: ${t.date} ${t.time}\nPrize: ${t.prize}\nFree Entry!`;
-    Linking.openURL(`https://wa.me/?text=${encodeURIComponent(msg)}`);
-  };
-
-  if (!authed) {
+  // --- SCREEN 1: Email Check ---
+  if (step === 1) {
     return (
-      <View style={styles.pinWrap}>
-        <Text style={styles.heading}>🔐 Admin Access</Text>
-        <TextInput style={styles.input} placeholder="Enter PIN" placeholderTextColor={colors.textDim} value={pin} onChangeText={setPin} keyboardType="number-pad" secureTextEntry maxLength={8} />
-        <TouchableOpacity style={styles.btn} onPress={tryLogin} activeOpacity={0.8}>
-          <Text style={styles.btnText}>Login</Text>
-        </TouchableOpacity>
-        <Text style={styles.hint}>Default PIN: 1234</Text>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loginBox}>
+          <Ionicons name="mail" size={60} color="#9333ea" style={{ marginBottom: 20 }} />
+          <Text style={styles.title}>ADMIN LOGIN</Text>
+          <Text style={styles.subtitle}>Enter Owner Email to continue</Text>
+          
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your Email"
+            placeholderTextColor="#666"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <TouchableOpacity style={styles.btn} onPress={handleEmailCheck}>
+            <Text style={styles.btnText}>VERIFY EMAIL</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
   }
 
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}>
-      <Text style={styles.heading}>➕ Add Tournament</Text>
-      <TextInput style={styles.input} placeholder="Name" placeholderTextColor={colors.textDim} value={name} onChangeText={setName} />
-      <TextInput style={styles.input} placeholder="Game (Free Fire MAX / BGMI)" placeholderTextColor={colors.textDim} value={game} onChangeText={setGame} />
-      <TextInput style={styles.input} placeholder="Mode (Survival, 1v1, CS Rank, etc.)" placeholderTextColor={colors.textDim} value={mode} onChangeText={setMode} />
-      <TextInput style={styles.input} placeholder="Date (YYYY-MM-DD)" placeholderTextColor={colors.textDim} value={date} onChangeText={setDate} />
-      <TextInput style={styles.input} placeholder="Time (e.g. 8:00 PM)" placeholderTextColor={colors.textDim} value={time} onChangeText={setTime} />
-      <TextInput style={styles.input} placeholder="Max players" placeholderTextColor={colors.textDim} value={maxPlayers} onChangeText={setMaxPlayers} keyboardType="number-pad" />
-      <TextInput style={styles.input} placeholder="Prize (e.g. 500 coins)" placeholderTextColor={colors.textDim} value={prize} onChangeText={setPrize} />
-      <TouchableOpacity style={styles.btn} onPress={addTournament} activeOpacity={0.8}>
-        <Text style={styles.btnText}>Add Tournament</Text>
-      </TouchableOpacity>
-
-      <Text style={[styles.heading, { marginTop: spacing.xxl }]}>📋 Tournaments ({tours.length})</Text>
-      {tours.length === 0 && <Text style={styles.empty}>No tournaments.</Text>}
-      {tours.map((t) => {
-        const count = regs.filter((r) => r.tournamentId === t.id).length;
-        return (
-          <View key={t.id} style={styles.itemCard}>
-            <View style={styles.itemHeader}>
-              <Text style={styles.itemTitle} numberOfLines={2}>{t.name}</Text>
-              <TouchableOpacity onPress={() => deleteTournament(t.id)}><Text style={styles.delete}>✕</Text></TouchableOpacity>
-            </View>
-            <Text style={styles.meta}>{t.game} • {t.mode || 'Classic'} • {count}/{t.maxPlayers}</Text>
-            <Text style={styles.meta}>{t.date} {t.time} • {t.prize}</Text>
-            <TouchableOpacity style={[styles.btn, { backgroundColor: colors.whatsapp, marginTop: spacing.sm }]} onPress={() => shareWA(t)} activeOpacity={0.8}>
-              <Text style={styles.btnText}>Share on WhatsApp</Text>
-            </TouchableOpacity>
-          </View>
-        );
-      })}
-
-      <Text style={[styles.heading, { marginTop: spacing.xxl }]}>👥 Players ({players.length})</Text>
-      {players.length === 0 && <Text style={styles.empty}>No players yet.</Text>}
-      {players.map((p) => (
-        <View key={p.id} style={styles.itemCard}>
-          <View style={styles.itemHeader}>
-            <Text style={styles.itemTitle} numberOfLines={1}>{p.name}</Text>
-            <Text style={styles.meta}>UID: {p.uid}</Text>
-          </View>
-          <Text style={styles.meta}>📱 {p.phone}</Text>
-          <Text style={styles.meta}>Kills: {p.kills} • Coins: {p.coins}</Text>
-          <TouchableOpacity style={[styles.btn, { backgroundColor: colors.green, marginTop: spacing.sm }]} onPress={() => setKillModal({ visible: true, player: p, value: '' })} activeOpacity={0.8}>
-            <Text style={styles.btnText}>+ Add Kills</Text>
+  // --- SCREEN 2: PIN Check ---
+  if (step === 2) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loginBox}>
+          <Ionicons name="lock-closed" size={60} color="#9333ea" style={{ marginBottom: 20 }} />
+          <Text style={styles.title}>SECURITY PIN</Text>
+          <Text style={styles.subtitle}>Enter 4-digit Admin PIN</Text>
+          
+          <TextInput
+            style={styles.input}
+            placeholder="****"
+            placeholderTextColor="#666"
+            value={pin}
+            onChangeText={setPin}
+            keyboardType="number-pad"
+            secureTextEntry
+            maxLength={4}
+          />
+          <TouchableOpacity style={styles.btn} onPress={handlePinCheck}>
+            <Text style={styles.btnText}>UNLOCK PANEL</Text>
           </TouchableOpacity>
         </View>
-      ))}
+      </SafeAreaView>
+    );
+  }
 
-      <Modal visible={killModal.visible} transparent animationType="fade" onRequestClose={() => setKillModal({ visible: false, player: null, value: '' })}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalSheet}>
-            <Text style={styles.modalTitle}>Add Kills — {killModal.player?.name}</Text>
-            <TextInput style={styles.input} placeholder="Number of kills" placeholderTextColor={colors.textDim} value={killModal.value} onChangeText={(v) => setKillModal({ ...killModal, value: v.replace(/[^0-9]/g, '') })} keyboardType="number-pad" autoFocus />
-            <TouchableOpacity style={styles.btn} onPress={submitKills} activeOpacity={0.8}><Text style={styles.btnText}>Add</Text></TouchableOpacity>
-            <TouchableOpacity style={[styles.btn, { backgroundColor: '#333' }]} onPress={() => setKillModal({ visible: false, player: null, value: '' })} activeOpacity={0.8}><Text style={styles.btnText}>Cancel</Text></TouchableOpacity>
+  // --- SCREEN 3: Main Admin Panel ---
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView>
+        <View style={styles.panelHeader}>
+          <Text style={styles.panelTitle}>ADMIN DASHBOARD</Text>
+          <TouchableOpacity onPress={() => setStep(1)}>
+            <Ionicons name="log-out-outline" size={24} color="#ef4444" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>24</Text>
+            <Text style={styles.statLabel}>Total Matches</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>150</Text>
+            <Text style={styles.statLabel}>Registered Users</Text>
           </View>
         </View>
-      </Modal>
-    </ScrollView>
+
+        <View style={styles.actionBox}>
+          <Text style={styles.sectionTitle}>QUICK ACTIONS</Text>
+          
+          <TouchableOpacity style={styles.actionBtn}>
+            <Ionicons name="add-circle" size={20} color="#9333ea" />
+            <Text style={styles.actionText}>Create New Tournament</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionBtn}>
+            <Ionicons name="people" size={20} color="#9333ea" />
+            <Text style={styles.actionText}>Manage Users</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionBtn}>
+            <Ionicons name="cash" size={20} color="#9333ea" />
+            <Text style={styles.actionText}>Withdrawal Requests</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  pinWrap: { flex: 1, backgroundColor: colors.bg, padding: spacing.lg, justifyContent: 'center' },
-  heading: { fontSize: 15, fontWeight: '700', color: colors.text, marginBottom: spacing.md },
-  input: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, color: colors.text, marginBottom: spacing.sm, fontSize: 14, minHeight: 44 },
-  btn: { backgroundColor: colors.primary, padding: spacing.md, borderRadius: radius.md, alignItems: 'center', marginTop: spacing.sm, minHeight: 44, justifyContent: 'center' },
-  btnText: { color: '#fff', fontWeight: '600', fontSize: 14 },
-  hint: { color: colors.textDim, fontSize: 11, textAlign: 'center', marginTop: spacing.md },
-  empty: { color: colors.textDim, fontSize: 13, padding: spacing.md, textAlign: 'center' },
-  itemCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.md, marginBottom: spacing.md, borderWidth: 1, borderColor: colors.border },
-  itemHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xs, gap: 8 },
-  itemTitle: { fontSize: 14, fontWeight: '700', color: colors.text, flex: 1 },
-  delete: { color: colors.danger, fontWeight: '700', fontSize: 16, paddingHorizontal: spacing.sm },
-  meta: { fontSize: 12, color: colors.textMuted, marginBottom: 2 },
-  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: spacing.lg },
-  modalSheet: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.xl },
-  modalTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: spacing.md },
+  container: { flex: 1, backgroundColor: '#0a0a0a' },
+  
+  // Login Screens
+  loginBox: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
+  title: { color: '#fff', fontSize: 22, fontWeight: '900', fontStyle: 'italic', letterSpacing: 1 },
+  subtitle: { color: '#666', fontSize: 12, marginTop: 8, marginBottom: 32 },
+  input: { width: '100%', backgroundColor: '#121212', borderWidth: 1, borderColor: '#333', borderRadius: 12, padding: 16, color: '#fff', fontSize: 16, marginBottom: 16 },
+  btn: { width: '100%', backgroundColor: '#9333ea', padding: 16, borderRadius: 12, alignItems: 'center' },
+  btnText: { color: '#fff', fontSize: 14, fontWeight: 'bold', letterSpacing: 1 },
+
+  // Admin Panel
+  panelHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#222' },
+  panelTitle: { color: '#fff', fontSize: 20, fontWeight: '900', fontStyle: 'italic' },
+  
+  statsRow: { flexDirection: 'row', padding: 16, gap: 16 },
+  statCard: { flex: 1, backgroundColor: '#121212', padding: 20, borderRadius: 16, borderWidth: 1, borderColor: '#222', alignItems: 'center' },
+  statValue: { color: '#9333ea', fontSize: 24, fontWeight: 'bold' },
+  statLabel: { color: '#666', fontSize: 10, fontWeight: 'bold', marginTop: 4 },
+
+  actionBox: { padding: 16 },
+  sectionTitle: { color: '#666', fontSize: 12, fontWeight: 'bold', letterSpacing: 1, marginBottom: 16 },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#121212', padding: 16, borderRadius: 12, marginBottom: 10, borderWidth: 1, borderColor: '#222', gap: 12 },
+  actionText: { color: '#fff', fontSize: 14, fontWeight: '600' }
 });
