@@ -4,32 +4,25 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 
-import TournamentsScreen from './src/screens/TournamentsScreen';
+import HomeScreen from './src/screens/HomeScreen';
+import ArenaScreen from './src/screens/ArenaScreen';
 import LeaderboardScreen from './src/screens/LeaderboardScreen';
+import WalletScreen from './src/screens/WalletScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
-import AdminScreen from './src/screens/AdminScreen';
-import { colors } from './src/theme';
 
 const Tab = createBottomTabNavigator();
 
+// Dark Premium Theme (Screenshots jaisa)
 const navTheme = {
-  ...DarkTheme,
+  dark: true,
   colors: {
-    ...DarkTheme.colors,
-    primary: colors.primary,
-    background: colors.bg,
-    card: colors.card,
-    text: colors.text,
-    border: colors.border,
-    notification: colors.accent,
+    primary: '#9333ea', // Purple
+    background: '#0a0a0a', // Deep Black
+    card: '#121212', // Dark Gray
+    text: '#ffffff',
+    border: '#1f1f1f',
+    notification: '#9333ea',
   },
-};
-
-const ICONS = {
-  Tournaments: 'game-controller',
-  Leaderboard: 'trophy',
-  Profile: 'person',
-  Admin: 'settings',
 };
 
 export default function App() {
@@ -38,28 +31,34 @@ export default function App() {
       <StatusBar style="light" />
       <Tab.Navigator
         screenOptions={({ route }) => ({
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name={ICONS[route.name]} size={size} color={color} />
-          ),
-          tabBarActiveTintColor: colors.primary,
-          tabBarInactiveTintColor: colors.textMuted,
-          tabBarStyle: {
-            backgroundColor: colors.card,
-            borderTopColor: colors.border,
-            height: 60,
-            paddingBottom: 8,
-            paddingTop: 4,
+          headerShown: false, // Header chhupaya gaya hai premium look ke liye
+          tabBarIcon: ({ color, size }) => {
+            let iconName;
+            if (route.name === 'HOME') iconName = 'home';
+            else if (route.name === 'ARENA') iconName = 'trophy';
+            else if (route.name === 'LEADERBOARD') iconName = 'podium';
+            else if (route.name === 'WALLET') iconName = 'wallet';
+            else if (route.name === 'PROFILE') iconName = 'person';
+            return <Ionicons name={iconName} size={size} color={color} />;
           },
-          tabBarLabelStyle: { fontSize: 11 },
-          headerStyle: { backgroundColor: colors.card },
-          headerTintColor: colors.text,
-          headerTitleStyle: { fontWeight: '700', fontSize: 16 },
+          tabBarActiveTintColor: '#9333ea',
+          tabBarInactiveTintColor: '#666666',
+          tabBarStyle: {
+            backgroundColor: '#121212',
+            borderTopWidth: 1,
+            borderTopColor: '#1f1f1f',
+            height: 65,
+            paddingBottom: 10,
+            paddingTop: 5,
+          },
+          tabBarLabelStyle: { fontSize: 10, fontWeight: 'bold', letterSpacing: 1 },
         })}
       >
-        <Tab.Screen name="Tournaments" component={TournamentsScreen} />
-        <Tab.Screen name="Leaderboard" component={LeaderboardScreen} />
-        <Tab.Screen name="Profile" component={ProfileScreen} />
-        <Tab.Screen name="Admin" component={AdminScreen} />
+        <Tab.Screen name="HOME" component={HomeScreen} />
+        <Tab.Screen name="ARENA" component={ArenaScreen} />
+        <Tab.Screen name="LEADERBOARD" component={LeaderboardScreen} />
+        <Tab.Screen name="WALLET" component={WalletScreen} />
+        <Tab.Screen name="PROFILE" component={ProfileScreen} />
       </Tab.Navigator>
     </NavigationContainer>
   );
